@@ -63,8 +63,9 @@ uint8_t system_control_get_state()
 ISR(CONTROL_INT_vect)
 {
   // Check Z limit switch (also on PORTC, shares PCINT1 vector)
+  // NOTE: Must not trigger during homing cycle - the homing routine polls limit state directly.
   if (bit_istrue(settings.flags,BITFLAG_HARD_LIMIT_ENABLE)) {
-    if (sys.state != STATE_ALARM) {
+    if (sys.state != STATE_ALARM && sys.state != STATE_HOMING) {
       if (!(sys_rt_exec_alarm)) {
         if (limits_get_state()) {
           mc_reset();

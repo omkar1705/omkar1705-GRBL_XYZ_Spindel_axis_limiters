@@ -117,9 +117,10 @@ uint8_t limits_get_state()
 // your e-stop switch to the Arduino reset pin, since it is the most correct way to do this.
 #ifndef ENABLE_SOFTWARE_DEBOUNCE
   // Hard limit ISR for X and Y (PORTB pin change)
+  // NOTE: Must not trigger during homing cycle - the homing routine polls limit state directly.
   ISR(LIMIT_INT_vect)
   {
-    if (sys.state != STATE_ALARM) {
+    if (sys.state != STATE_ALARM && sys.state != STATE_HOMING) {
       if (!(sys_rt_exec_alarm)) {
         #ifdef HARD_LIMIT_FORCE_STATE_CHECK
           if (limits_get_state()) {
@@ -141,7 +142,7 @@ uint8_t limits_get_state()
   ISR(WDT_vect) // Watchdog timer ISR
   {
     WDTCSR &= ~(1<<WDIE); // Disable watchdog timer. 
-    if (sys.state != STATE_ALARM) {  // Ignore if already in alarm state. 
+    if (sys.state != STATE_ALARM && sys.state != STATE_HOMING) {  // Ignore if already in alarm or homing state.
       if (!(sys_rt_exec_alarm)) {
         // Check limit pin state. 
         if (limits_get_state()) {
